@@ -33,7 +33,7 @@ sample = matrix = [
     [       0,      0,      0,      0,      0,      0,      0,      0],
 ]
 
-label = 1
+label = 6
 
 sample_bool = basic_bool(sample)
 
