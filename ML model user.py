@@ -6,58 +6,39 @@ inner_frac = 0.5
 threshold = 0.2
 min_ink = 0.25
 
-def grid_center_extract_batch(
-    images,  # shape (n, height, width)
-    inner_frac=0.5,
-    threshold=0.2,
-    min_ink_fraction=0.01
-):
-    n, height, width = images.shape
+#should be adjusted based on readings
+threshold_ADC = 1000
 
-    cell_width = width // N
-    cell_height = height // N
-
-    output = np.zeros((n, N, N), dtype=bool)
-
+#The inputs should be taken in intervals take the full picture (? sec = 1 image)
+#Maybe starting from a point of first pressed grid point
+#this will have to be replaced with a func that turns ADC (0-4065) into bool (true or false)
+def basic_bool(readings):
+    output = np.zeros((1, N, N), dtype=bool)
+    
     for r in range(N):
         for c in range(N):
-            cell_y_0 = r * cell_height
-            cell_x_0 = c * cell_width
-
-            cell = images[:, cell_y_0:cell_y_0 + cell_height, cell_x_0:cell_x_0 + cell_width]
-
-            # Inner window (basically the sensor's area of sensoring)
-            window_width = max(1, int(cell_width * inner_frac))
-            window_height = max(1, int(cell_height * inner_frac))
-
-            window_x_0 = (cell_width - window_width) // 2
-            window_y_0 = (cell_height - window_height) // 2
-
-            window = cell[:, window_y_0:window_y_0 + window_height, window_x_0:window_x_0 + window_width]
-
-            ink = window > threshold
-            frac = ink.mean(axis=(1, 2))
-
-            output[:, r, c] = frac >= min_ink_fraction
-
+            output[:, r, c] = readings[r][c] > threshold_ADC
+    
     return output
 
+# new ML model should be built !!!
+model = tf.keras.models.load_model("ml_model.keras")
 
-model = tf.keras.models.load_model("mnist_grid_model.keras")
+'One small test'
+sample = matrix = [
+    [       0,      0,      0,      0,      0,      0,      0,      0],
+    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
+    [       0,      0,   2000,      0,      0,      0,      0,      0],
+    [       0,      0,   2000,      0,      0,      0,      0,      0],
+    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
+    [       0,      0,   2000,      0,      0,   2000,      0,      0],
+    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
+    [       0,      0,      0,      0,      0,      0,      0,      0],
+]
 
-'One test'
-(_, _), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-x_test = x_test.astype(np.float32) / 255.0
+label = 1
 
-sample = x_test[0:1]
-label = y_test[0]
-
-sample_bool = grid_center_extract_batch(
-    sample,
-    inner_frac=inner_frac,
-    threshold=threshold,
-    min_ink_fraction=min_ink
-)
+sample_bool = basic_bool(sample)
 
 sample_feat = sample_bool.reshape(-1, N * N).astype(np.float32)
 
