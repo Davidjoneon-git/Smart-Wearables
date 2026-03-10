@@ -3,7 +3,6 @@ import struct
 from bleak import BleakScanner, BleakClient
 import numpy as np
 import tensorflow as tf
-import time as tm
 
 N=8
 
@@ -22,7 +21,7 @@ sample = matrix = [
     [       0,      0,      0,      0,      0,      0,      0,      0],
 ]
 
-# new ML model should be built !!!
+# new ML model should be built after each import!!!
 model = tf.keras.models.load_model("ml_model.keras")
 
 DEVICE_NAME = "XIAO-ESP32S3"
@@ -46,6 +45,7 @@ def basic_bool(readings):
 
 retained = np.zeros((1, N, N), dtype=int)
 def update_matrix(readings):
+    global retained
     for r in range(N):
         for c in range(N):
             retained[:, r, c] = max(readings[r][c], retained[:, r, c])
@@ -54,6 +54,7 @@ max_times = 60 # about 3 sec
 times = 0
 
 def handle_notification(sender, data):
+    global times, retained
     if len(data) != PACKET_SIZE:
         print(f"Wrong packet size: got {len(data)}, expected {PACKET_SIZE}")
         return
@@ -63,9 +64,10 @@ def handle_notification(sender, data):
     backspace = values[0]
     matrix = values[1:]
 
-    print("Backspace:", backspace)
+    if backspace > threshold_ADC:
+        print("Pressed")
 
-    # Optional: reshape into 8x8
+    # Reshape into 8x8
     grid = [matrix[i*8:(i+1)*8] for i in range(8)]
     update_matrix(grid)
     times += 1
