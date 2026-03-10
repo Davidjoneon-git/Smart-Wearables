@@ -2,9 +2,6 @@ import numpy as np
 import tensorflow as tf
 
 N=8
-inner_frac = 0.5
-threshold = 0.2
-min_ink = 0.25
 
 #should be adjusted based on readings
 threshold_ADC = 1000
