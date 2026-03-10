@@ -9,18 +9,6 @@ N=8
 #should be adjusted based on readings
 threshold_ADC = 1000
 
-'One small test'
-sample = matrix = [
-    [       0,      0,      0,      0,      0,      0,      0,      0],
-    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
-    [       0,      0,   2000,      0,      0,      0,      0,      0],
-    [       0,      0,   2000,      0,      0,      0,      0,      0],
-    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
-    [       0,      0,   2000,      0,      0,   2000,      0,      0],
-    [       0,      0,   2000,   2000,   2000,   2000,      0,      0],
-    [       0,      0,      0,      0,      0,      0,      0,      0],
-]
-
 # new ML model should be built after each import!!!
 model = tf.keras.models.load_model("ml_model.keras")
 
