@@ -49,7 +49,7 @@ x_test  = x_test.astype(np.float32) / 255.0
 
 #min % that needs to be "sensed" to be "pressed"
 min_ink = 0.25
-n_sizes = [8]
+n_sizes = [4,5,6,7,8,9,10,11,12,13,14,15,16]
 accuracies = []
 losses = []
 
