@@ -49,61 +49,59 @@ x_test  = x_test.astype(np.float32) / 255.0
 
 #min % that needs to be "sensed" to be "pressed"
 min_ink = 0.25
-n_sizes = [4,5,6,7,8,9,10,11,12,13,14,15,16]
+N=8
 accuracies = []
 losses = []
 
-for n_grid in n_sizes:
-    x_train_bool = grid_center_extract_batch(
-        x_train,
-        grid_width=n_grid,
-        grid_height=n_grid,
-        inner_frac=0.5,
-        threshold=0.2,
-        min_ink_fraction=min_ink
-    )
-    x_test_bool = grid_center_extract_batch(
-        x_test,
-        grid_width=n_grid,
-        grid_height=n_grid,
-        inner_frac=0.5,
-        threshold=0.2,
-        min_ink_fraction=min_ink
-    )
+x_train_bool = grid_center_extract_batch(
+    x_train,
+    grid_width=N,
+    grid_height=N,
+    inner_frac=0.5,
+    threshold=0.2,
+    min_ink_fraction=min_ink
+)
+x_test_bool = grid_center_extract_batch(
+    x_test,
+    grid_width=N,
+    grid_height=N,
+    inner_frac=0.5,
+    threshold=0.2,
+    min_ink_fraction=min_ink
+)
 
-    # Flatten grid
-    # Feature vector of length n_grid*n_grid
-    x_train_feat = x_train_bool.reshape(-1, n_grid * n_grid).astype(np.float32)
-    x_test_feat  = x_test_bool.reshape(-1, n_grid * n_grid).astype(np.float32)
+# Flatten grid
+# Feature vector of length N*N
+x_train_feat = x_train_bool.reshape(-1, N * N).astype(np.float32)
+x_test_feat  = x_test_bool.reshape(-1, N * N).astype(np.float32)
 
-    # Build model
-    model = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=(n_grid * n_grid,)),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(10, activation='softmax')
-    ])
+# Build model
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(N * N,)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
 
-    # Compiling
-    model.compile(
-        optimizer='adam',
-        loss='sparse_categorical_crossentropy',
-        metrics=['accuracy']
-    )
+# Compiling
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
 
-    # Training
-    model.fit(
-        x_train_feat,
-        y_train,
-        epochs=5,
-        batch_size=128,
-        validation_split=0.1
-    )
+# Training
+model.fit(
+    x_train_feat,
+    y_train,
+    epochs=5,
+    batch_size=128,
+    validation_split=0.1
+)
 
-    # Evaluation
-    test_loss, test_acc = model.evaluate(x_test_feat, y_test)
-    accuracies.append(test_acc)
-    losses.append(test_loss)
-    print("Done", n_grid)
+# Evaluation
+loss, accuracy = model.evaluate(x_test_feat, y_test)
+print("Done")
 
-for i in range(len(n_sizes)):
-    print(f"({n_sizes[i]}x{n_sizes[i]})\nAccuracy: {accuracies[i]}")
+model.save("ml_model.keras")
+
+print(f"(8x8)\nAccuracy: {accuracy}")
