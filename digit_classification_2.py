@@ -49,7 +49,7 @@ x_test  = x_test.astype(np.float32) / 255.0
 
 #min % that needs to be "sensed" to be "pressed"
 min_ink = 0.25
-n_sizes = [4,5,6,7,8,9,10,11,12,13,14,15,16]
+n_sizes = [8]
 accuracies = []
 losses = []
 
@@ -104,6 +104,8 @@ for n_grid in n_sizes:
     accuracies.append(test_acc)
     losses.append(test_loss)
     print("Done", n_grid)
+
+model.save("mnist_grid_model.keras")
 
 for i in range(len(n_sizes)):
     print(f"({n_sizes[i]}x{n_sizes[i]})\nAccuracy: {accuracies[i]}")
