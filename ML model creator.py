@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 def grid_center_extract_batch(
     images,  # shape (n, height, width)
@@ -104,4 +105,15 @@ print("Done")
 
 model.save("ml_model.keras")
 
+# after training your model
+predictions = model.predict(x_test_feat)
+
+# convert probabilities to class indices
+y_pred = np.argmax(predictions, axis=1)
+
+# confusion matrix
+cm = tf.math.confusion_matrix(y_test, y_pred)
+
+
 print(f"(8x8)\nAccuracy: {accuracy}")
+print(f"Confusion matrix: \n{cm}")
