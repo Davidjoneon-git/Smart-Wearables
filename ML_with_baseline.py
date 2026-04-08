@@ -19,30 +19,46 @@ NUM_VALUES = 65  # 1 backspace + 64 matrix values
 PACKET_FORMAT = "<65H"  # little-endian, 65 unsigned shorts
 PACKET_SIZE = struct.calcsize(PACKET_FORMAT)
 
-#The inputs should be taken in intervals take the full picture (? sec = 1 image or ? reading = 1 image) (30 reading / sec)
-#Maybe starting from a point of first pressed grid point
-#this will have to be replaced with a func that turns ADC (0-4065) into bool (true or false)
-def basic_bool(readings):
+
+# Extra ADC value that mimics pressed value
+PlusADC = 500
+
+def MatrixToBoolean(readings):
+    global BaselineMatrix
     output = np.zeros((1, N, N), dtype=bool)
     
+    # converts ADC values into Boolean values
     for r in range(N):
         for c in range(N):
-            output[:, r, c] = readings[:, r, c] > threshold_ADC
+            output[:, r, c] = readings[:, r, c] > (BaselineMatrix[r,c] + PlusADC)
     
     return output
 
+# This should be redone
+# Not updating the values in a list, but adding new layers into an np.array and when needed collapse them.
+# This would eliminate false readings a bit
 retained = np.zeros((1, N, N), dtype=int)
 def update_matrix(readings):
     global retained
+    
+    # Collects the values
     for r in range(N):
         for c in range(N):
             retained[:, r, c] = max(readings[r][c], retained[:, r, c])
 
-max_times = 60 # about 3 sec
+# number of readings for a single deciding
+max_times = 60
+
+# reading index
 times = 0
 
+# number of collected sample for baseline
 baselineReadingsNum = 500
+
+# Is collecting data for baseline
 IsBaseline = True
+
+# Buffers only for baseline creation
 BaselineMatrixFrames = []
 BaselineBackspaceFrames =[]
 
@@ -58,12 +74,16 @@ def CreateBaselineData(backspace, matrix):
     if times >= baselineReadingsNum:
         IsBaseline = False
         times = 0
+        
+        # Creates Numpy.Array(len(Frames), N, N)
         Mbuffer = np.array(BaselineMatrixFrames)
         Bbuffer = np.array(BaselineBackspaceFrames)
         
+        # Collapses them with median into Numpy.Array(1, N, N)
         BaselineMatrix = np.median(Mbuffer, axis = 0)
         BaselineBackspace = np.median(Bbuffer, axis = 0)
         
+        # Clears them for efficiency (not really needed, but nice)
         BaselineMatrixFrames.clear()
         BaselineBackspaceFrames.clear()
         
@@ -71,7 +91,7 @@ def CreateBaselineData(backspace, matrix):
         
         return
 
-
+# Handles all incoming BLE data
 def handle_notification(sender, data):
     global times, retained
     if len(data) != PACKET_SIZE:
@@ -80,6 +100,7 @@ def handle_notification(sender, data):
 
     values = struct.unpack(PACKET_FORMAT, data)
 
+    # Incoming values
     backspace = values[0]
     matrix = values[1:]
     
@@ -87,6 +108,7 @@ def handle_notification(sender, data):
         CreateBaselineData(backspace, matrix)
         return
 
+    # Not really useful backspace check
     if backspace > threshold_ADC:
         print("Pressed")
 
@@ -94,8 +116,10 @@ def handle_notification(sender, data):
     grid = [matrix[i*8:(i+1)*8] for i in range(8)]
     update_matrix(grid)
     times += 1
+    
+    # Checks if it should decide on a number
     if times == max_times:
-        sample_bool = basic_bool(retained)
+        sample_bool = MatrixToBoolean(retained)
         sample_feat = sample_bool.reshape(-1, N * N).astype(np.float32)
         prediction = model.predict(sample_feat)
         predicted_digit = np.argmax(prediction, axis=1)[0]
@@ -103,6 +127,8 @@ def handle_notification(sender, data):
         retained = np.zeros((1, N, N), dtype=int)
         times = 0
 
+
+# Main function that connects with the ESP and recieves data periodically
 async def main():
     print("Scanning...")
     devices = await BleakScanner.discover()
