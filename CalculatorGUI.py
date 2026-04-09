@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-import time
 
 Font = ("Arial", 12)
 baseNum = "Nothing"
@@ -40,6 +39,7 @@ def clearWindow(window : tk.Tk):
         widget.destroy()
 
 
+# Will have to sync up with actual progress on baseline 
 def StartProgress( window: tk.Toplevel, progress: ttk.Progressbar, value: int):
     progress["value"] = value
 
@@ -70,6 +70,29 @@ def StartCreateBaseline():
     StartProgress(top, progress, 0)
     
 
+def DeviceFound():
+    UpdateText(DeviceConnectionTop, DeviceConnectionTopLabel, "Device Found")
+    DeviceConnectionTop.after(1000, DeviceConnectionTop.destroy())
+    StartCreateBaseline()
+    
+    
+
+def Connecting():
+    global Font, DeviceConnectionTop, DeviceConnectionTopLabel
+    DeviceConnectionTop = tk.Toplevel()
+    DeviceConnectionTop.grab_set()
+    DeviceConnectionTop.focus_set()
+    DeviceConnectionTop.title("Connecting...")
+    DeviceConnectionTop.resizable(False, False)
+    
+    Text = "Connecting to a device"
+    
+    DeviceConnectionTopLabel = tk.Label(DeviceConnectionTop, text = Text, font=Font, justify="center")
+    DeviceConnectionTopLabel.grid(row=0, column=0, padx= 5, pady=20) 
+    
+    # Device Found Trigger
+    DeviceConnectionTop.after_idle(lambda: DeviceConnectionTop.after(4000, lambda: DeviceFound()))
+
 def MainMenuWindow():
     global Menu, Font
     Menu = tk.Tk()
@@ -84,7 +107,7 @@ def MainMenuWindow():
     NoteLabel = tk.Label(Menu, text = Text, font=Font, justify="center")
     NoteLabel.grid(row=0, column=0, padx= 10, pady=20)
 
-    StartButton = tk.Button(Menu, text="Start Calibration", bg="grey", width=24, height=2, command= StartCreateBaseline)
+    StartButton = tk.Button(Menu, text="Connect", bg="grey", width=24, height=2, command=lambda: Connecting())
     StartButton.grid(row=1, column=0, padx= 5, pady=5)
     
     Menu.mainloop()
