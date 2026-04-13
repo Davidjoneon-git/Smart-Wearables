@@ -20,7 +20,6 @@ def handle_notification(sender, data):
     matrix = values[1:]
 
     print("Backspace:", backspace)
-    print("Matrix values:", matrix)
 
     # Optional: reshape into 8x8
     grid = [matrix[i*8:(i+1)*8] for i in range(8)]
@@ -34,7 +33,7 @@ async def main():
 
     target = None
     for d in devices:
-        if d.name == DEVICE_NAME:
+        if d.name and DEVICE_NAME in d.name:
             target = d
             break
 

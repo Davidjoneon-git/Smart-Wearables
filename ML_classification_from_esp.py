@@ -74,7 +74,7 @@ async def main():
 
     target = None
     for d in devices:
-        if d.name == DEVICE_NAME:
+        if d.name and DEVICE_NAME in d.name:
             target = d
             break
 

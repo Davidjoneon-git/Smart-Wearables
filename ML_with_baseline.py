@@ -53,7 +53,7 @@ max_times = 60
 times = 0
 
 # number of collected sample for baseline
-baselineReadingsNum = 500
+baselineReadingsNum = 80
 
 # Is collecting data for baseline
 IsBaseline = True
@@ -70,6 +70,7 @@ def CreateBaselineData(backspace, matrix):
     BaselineBackspaceFrames.append(backspace)
     
     times += 1
+    print(times)
     
     if times >= baselineReadingsNum:
         IsBaseline = False
@@ -80,14 +81,17 @@ def CreateBaselineData(backspace, matrix):
         Bbuffer = np.array(BaselineBackspaceFrames)
         
         # Collapses them with median into Numpy.Array(1, N, N)
-        BaselineMatrix = np.median(Mbuffer, axis = 0)
+        BaselineMatrix = np.median(Mbuffer, axis = 0).reshape(N, N)
         BaselineBackspace = np.median(Bbuffer, axis = 0)
         
         # Clears them for efficiency (not really needed, but nice)
         BaselineMatrixFrames.clear()
         BaselineBackspaceFrames.clear()
         
-        print(BaselineBackspace, BaselineMatrix)
+        print(BaselineBackspace)
+        grid = [BaselineMatrix[i*8:(i+1)*8] for i in range(8)]
+        for row in grid:
+            print(row)
         
         return
 
@@ -122,11 +126,14 @@ def handle_notification(sender, data):
         sample_bool = MatrixToBoolean(retained)
         sample_feat = sample_bool.reshape(-1, N * N).astype(np.float32)
         prediction = model.predict(sample_feat)
-        predicted_digit = np.argmax(prediction, axis=1)[0]
-        print(f"Predicted Digit: {predicted_digit}")
+        y_pred = np.argmax(prediction, axis=1)
+        confidences = np.max(prediction, axis = 1)
+        predicted_digit = np.where(confidences >= nullThreshold, y_pred, -1)[0]
+        print(f"Predicted Digit: {predicted_digit}, confidence: {confidences[0]}")
         retained = np.zeros((1, N, N), dtype=int)
         times = 0
 
+nullThreshold = 0.7
 
 # Main function that connects with the ESP and recieves data periodically
 async def main():
@@ -135,7 +142,7 @@ async def main():
 
     target = None
     for d in devices:
-        if d.name == DEVICE_NAME:
+        if d.name and DEVICE_NAME in d.name:
             target = d
             break
 
