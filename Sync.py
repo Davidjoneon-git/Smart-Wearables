@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
+import tensorflow as tf
+import numpy as np
 import asyncio
 import struct
 import calculator
@@ -19,6 +21,91 @@ Menu = None
 DeviceConnectionTop = None
 DeviceConnectionTopLabel = None
 top = None
+
+# new ML model should be built after each import!!!
+model = tf.keras.models.load_model("ml_model.keras")
+
+N=8
+
+# confidence threshold for "null"
+nullThreshold = 0.7
+
+# number of collected samples for baseline
+baselineReadingsNum = 80
+
+# Is collecting data for baseline
+IsBaseline = True
+
+# Buffers only for baseline creation
+BaselineMatrixFrames = []
+BaselineBackspaceFrames = []
+
+# Will be created after baseline collection
+BaselineMatrix = np.zeros((N, N), dtype=np.float32)
+BaselineBackspace = 0.0
+
+# Retained matrix for inference stage
+retained = np.zeros((1, N, N), dtype=int)
+
+PlusADC = 31
+
+max_times = 60
+        
+
+def MatrixToBoolean(readings):
+    global BaselineMatrix
+    output = np.zeros((1, N, N), dtype=bool)
+
+    # converts ADC values into Boolean values
+    for r in range(N):
+        for c in range(N):
+            output[:, r, c] = readings[:, r, c] > (BaselineMatrix[r, c] + PlusADC)
+
+    return output
+
+def update_matrix(readings):
+    global retained
+
+    # Collect maximum values over the current decision window
+    for r in range(N):
+        for c in range(N):
+            retained[0, r, c] = max(readings[r][c], retained[0, r, c])
+
+def CreateBaselineData(backspace, matrix):
+    global IsBaseline, times, BaselineMatrix, BaselineBackspace
+
+    # reshape incoming flat 64 values into 8x8
+    matrix_2d = np.array(matrix, dtype=np.float32).reshape(N, N)
+
+    BaselineMatrixFrames.append(matrix_2d)
+    BaselineBackspaceFrames.append(backspace)
+
+    times += 1
+    Progress(top, progress, times)
+    print(f"Baseline frame {times}/{baselineReadingsNum}")
+
+    if times >= baselineReadingsNum:
+        IsBaseline = False
+        times = 0
+
+        # shape -> (num_frames, N, N)
+        Mbuffer = np.array(BaselineMatrixFrames, dtype=np.float32)
+        Bbuffer = np.array(BaselineBackspaceFrames, dtype=np.float32)
+
+        # collapse with median
+        BaselineMatrix = np.median(Mbuffer, axis=0)
+        BaselineBackspace = np.median(Bbuffer)
+
+        # clear buffers
+        BaselineMatrixFrames.clear()
+        BaselineBackspaceFrames.clear()
+
+        print("\nBaseline finished")
+        print("BaselineBackspace:", BaselineBackspace)
+        print("BaselineMatrix:")
+        for row in BaselineMatrix:
+            print(row)
+
 
 def CreateEquation():
     return "".join(map(str, Parts))
@@ -61,7 +148,7 @@ def StartApp(window: tk.Tk):
     new_input_label = tk.Label(window, text="")
     new_input_label.grid(row=1, column=0, padx=20, pady=20)
 
-    test_button = tk.Button(
+    calculate_button = tk.Button(
         window,
         text="Calculate",
         bg="grey",
@@ -70,22 +157,40 @@ def StartApp(window: tk.Tk):
         command=lambda: Calculate(window, equation_label)
     )
     test_button.grid(row=2, column=0, padx=5, pady=5)
+    
+    "Should be removed later"
+    
+    test_button = tk.Button(
+        window,
+        text="+",
+        bg="grey",
+        width=24,
+        height=2,
+        command=lambda: AddValue(" + ")
+    )
+    test_button.grid(row=2, column=1, padx=5, pady=5)
+    
+    test2_button = tk.Button(
+        window,
+        text="-",
+        bg="grey",
+        width=24,
+        height=2,
+        command=lambda: AddValue(" - ")
+    )
+    test2_button.grid(row=2, column=2, padx=5, pady=5)
 
-
-def StartProgress(window: tk.Toplevel, progress: ttk.Progressbar, value: int):
+def Progress(window: tk.Toplevel, progress: ttk.Progressbar, value: int):
     progress["value"] = value
-
-    if value < 100:
-        window.after(50, lambda: StartProgress(window, progress, value + 1))
-    else:
+    if (value == baselineReadingsNum):
         clearWindow(Menu)
         StartApp(Menu)
         window.destroy()
 
-
 def StartCreateBaseline():
-    global top
+    global top, progress
     top = tk.Toplevel(Menu)
+    progress["maximum"] = baselineReadingsNum
     top.grab_set()
     top.focus_set()
     top.title("Calibration")
@@ -98,8 +203,6 @@ def StartCreateBaseline():
 
     progress = ttk.Progressbar(top, orient="horizontal", length=300, mode="determinate")
     progress.grid(row=1, column=0, pady=30, padx=10)
-
-    StartProgress(top, progress, 0)
 
 
 async def DeviceFound():
@@ -155,14 +258,36 @@ def handle_notification(sender, data):
 
     backspace = values[0]
     matrix = values[1:]
+    
+    if IsBaseline:
+        CreateBaselineData(backspace, matrix)
+        return
+    
+    if backspace > BaselineBackspace + PlusADC:
+        print("Pressed")
 
-    print("Backspace:", backspace)
+    grid = np.array(matrix, dtype=np.int32).reshape(N, N)
+    update_matrix(grid)
 
-    grid = [matrix[i * 8:(i + 1) * 8] for i in range(8)]
-    for row in grid:
-        print(row)
-    print("-" * 40)
+    times += 1
 
+    # Checks if it should decide on a number
+    if times >= max_times:
+        sample_bool = MatrixToBoolean(retained)
+        sample_feat = sample_bool.reshape(-1, N * N).astype(np.float32)
+
+        prediction = model.predict(sample_feat, verbose=0)
+        y_pred = np.argmax(prediction, axis=1)
+        confidences = np.max(prediction, axis=1)
+
+        predicted_digit = np.where(confidences >= nullThreshold, y_pred, -1)[0]
+        print(f"Predicted Digit: {predicted_digit}, confidence: {confidences[0]}")
+        
+        if (predicted_digit != -1):
+            AddValue(predicted_digit)
+
+        retained = np.zeros((1, N, N), dtype=int)
+        times = 0
 
 async def main():
     print("Scanning...")
