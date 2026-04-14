@@ -136,7 +136,7 @@ def DeleteValue():
 
 def Calculate(window: tk.Tk, label: tk.Label):
     if (calculator.EquationIntegrity(Parts)):
-        UpdateText(window, label, (CreateEquation() + " = " + calculator.Equal(Parts)))
+        UpdateText(window, label, ("= " + calculator.Equal(Parts)))
 
 def StartApp(window: tk.Tk):
     global new_input_label, equation_label
@@ -147,6 +147,9 @@ def StartApp(window: tk.Tk):
 
     equation_label = tk.Label(window, text=texts, font=Font, justify="center", wraplength=300)
     equation_label.grid(row=0, column=0, padx=5, pady=5)
+    
+    answer_label = tk.Label(window, text="=", font=Font, justify="right")
+    answer_label.grid(row=0, column=1, padx=5, pady=5)
 
     new_input_label = tk.Label(window, text="")
     new_input_label.grid(row=1, column=0, padx=20, pady=20)
@@ -157,7 +160,7 @@ def StartApp(window: tk.Tk):
         bg="grey",
         width=24,
         height=2,
-        command=lambda: Calculate(window, equation_label)
+        command=lambda: Calculate(window, answer_label)
     )
     calculate_button.grid(row=2, column=0, padx=5, pady=5)
     
