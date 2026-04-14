@@ -50,6 +50,8 @@ retained = np.zeros((1, N, N), dtype=int)
 PlusADC = 31
 
 max_times = 60
+
+times = 0
         
 
 def MatrixToBoolean(readings):
@@ -128,8 +130,9 @@ def AddValue(value):
     UpdateText(Menu, equation_label, CreateEquation())
 
 def DeleteValue():
-    Parts.pop(-1)
-    UpdateText(Menu, equation_label, CreateEquation())
+    if (Parts):
+        Parts.pop(-1)
+        UpdateText(Menu, equation_label, CreateEquation())
 
 def Calculate(window: tk.Tk, label: tk.Label):
     if (calculator.EquationIntegrity(Parts)):
@@ -156,9 +159,9 @@ def StartApp(window: tk.Tk):
         height=2,
         command=lambda: Calculate(window, equation_label)
     )
-    test_button.grid(row=2, column=0, padx=5, pady=5)
+    calculate_button.grid(row=2, column=0, padx=5, pady=5)
     
-    "Should be removed later"
+    # Should be removed later
     
     test_button = tk.Button(
         window,
@@ -187,10 +190,9 @@ def Progress(window: tk.Toplevel, progress: ttk.Progressbar, value: int):
         StartApp(Menu)
         window.destroy()
 
-def StartCreateBaseline():
+def StartCreatingBaseline():
     global top, progress
     top = tk.Toplevel(Menu)
-    progress["maximum"] = baselineReadingsNum
     top.grab_set()
     top.focus_set()
     top.title("Calibration")
@@ -203,6 +205,7 @@ def StartCreateBaseline():
 
     progress = ttk.Progressbar(top, orient="horizontal", length=300, mode="determinate")
     progress.grid(row=1, column=0, pady=30, padx=10)
+    progress["maximum"] = baselineReadingsNum
 
 
 async def DeviceFound():
@@ -212,7 +215,7 @@ async def DeviceFound():
     if DeviceConnectionTop.winfo_exists():
         DeviceConnectionTop.destroy()
 
-    StartCreateBaseline()
+    StartCreatingBaseline()
 
 
 def Connecting():
@@ -250,6 +253,7 @@ def MainMenuWindow():
 
 
 def handle_notification(sender, data):
+    global times, retained
     if len(data) != PACKET_SIZE:
         print(f"Wrong packet size: got {len(data)}, expected {PACKET_SIZE}")
         return
@@ -280,7 +284,7 @@ def handle_notification(sender, data):
         y_pred = np.argmax(prediction, axis=1)
         confidences = np.max(prediction, axis=1)
 
-        predicted_digit = np.where(confidences >= nullThreshold, y_pred, -1)[0]
+        predicted_digit = int(np.where(confidences >= nullThreshold, y_pred, -1)[0])
         print(f"Predicted Digit: {predicted_digit}, confidence: {confidences[0]}")
         
         if (predicted_digit != -1):
@@ -328,11 +332,8 @@ async def tk_loop(root: tk.Tk):
     except tk.TclError:
         pass
 
-
 async def app():
     MainMenuWindow()
     await tk_loop(Menu)
 
-
-if __name__ == "__main__":
-    asyncio.run(app())
+asyncio.run(app())
