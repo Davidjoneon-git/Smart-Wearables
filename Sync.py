@@ -294,6 +294,7 @@ def handle_notification(sender, data):
         confidences = np.max(prediction, axis=1)
 
         predicted_digit = int(np.where(confidences >= nullThreshold, y_pred, -1)[0])
+        print(confidences)
         print(f"Predicted Digit: {predicted_digit}, confidence: {confidences[0]}")
         
         if (predicted_digit != -1):
