@@ -47,12 +47,19 @@ BaselineBackspace = 0.0
 # Retained matrix for inference stage
 retained = np.zeros((1, N, N), dtype=int)
 
-PlusADC = 31
-
 max_times = 60
 
 times = 0
         
+def Threshold(value : int):
+    maxADC = 4096
+    exp = 0.84
+    center = maxADC/2
+    base = 400
+    d = abs(value - center) / center
+        
+    return (max(0, base * (1 - d**exp)))
+    
 
 def MatrixToBoolean(readings):
     global BaselineMatrix
@@ -61,7 +68,7 @@ def MatrixToBoolean(readings):
     # converts ADC values into Boolean values
     for r in range(N):
         for c in range(N):
-            output[:, r, c] = readings[:, r, c] > (BaselineMatrix[r, c] + PlusADC)
+            output[:, r, c] = readings[:, r, c] > Threshold(BaselineMatrix[r, c])
 
     return output
 
@@ -270,7 +277,7 @@ def handle_notification(sender, data):
         CreateBaselineData(backspace, matrix)
         return
     
-    if backspace > BaselineBackspace + PlusADC:
+    if backspace > Threshold(BaselineBackspace):
         print("Pressed")
 
     grid = np.array(matrix, dtype=np.int32).reshape(N, N)
