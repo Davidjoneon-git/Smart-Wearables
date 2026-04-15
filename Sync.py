@@ -58,7 +58,7 @@ def Threshold(value : int):
     base = 400
     d = abs(value - center) / center
         
-    return (max(0, base * (1 - d**exp)))
+    return value + (max(0, base * (1 - d**exp)))
     
 
 def MatrixToBoolean(readings):
