@@ -143,7 +143,7 @@ def DeleteValue():
 
 def Calculate(window: tk.Tk, label: tk.Label):
     if (calculator.EquationIntegrity(Parts)):
-        UpdateText(window, label, ("= " + calculator.Equal(Parts)))
+        UpdateText(window, label, ("= " + str(calculator.Equal(Parts))))
 
 def StartApp(window: tk.Tk):
     global new_input_label, equation_label
