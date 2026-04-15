@@ -5,6 +5,7 @@ import numpy as np
 import asyncio
 import struct
 import calculator
+import tkinter.font as tkFont
 from bleak import BleakScanner, BleakClient
 
 DEVICE_NAME = "XIAO-ESP32S3"
@@ -148,18 +149,18 @@ def Calculate(window: tk.Tk, label: tk.Label):
 def StartApp(window: tk.Tk):
     global new_input_label, equation_label
     window.title("Calculator")
-    window.geometry("400x200")
+    window.geometry("500x300")
 
     texts = CreateEquation()
 
-    equation_label = tk.Label(window, text=texts, font=Font, justify="center", wraplength=300)
-    equation_label.grid(row=0, column=0, padx=5, pady=5)
+    equation_label = tk.Label(window, text=texts, font=Font, justify="center")
+    equation_label.grid(row=0, column=1, padx=5, pady=5)
     
     answer_label = tk.Label(window, text="=", font=Font, justify="right")
-    answer_label.grid(row=0, column=1, padx=5, pady=5)
+    answer_label.grid(row=0, column=2, padx=5, pady=5)
 
-    new_input_label = tk.Label(window, text="")
-    new_input_label.grid(row=1, column=0, padx=20, pady=20)
+    new_input_label = tk.Label(window, text="", font=tkFont(weight="bold", size=14))
+    new_input_label.grid(row=0, column=0, padx=20, pady=20)
 
     calculate_button = tk.Button(
         window,
