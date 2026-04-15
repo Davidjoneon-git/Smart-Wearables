@@ -15,7 +15,7 @@ PACKET_FORMAT = "<65H"
 PACKET_SIZE = struct.calcsize(PACKET_FORMAT)
 
 Font = ("Arial", 12)
-Parts = [1, 2, 3, " + ", 3, 4, " - ", 4, 3, " - ", 3, 3, " + ", 3, 3, 3, 3]
+Parts = []
 
 Menu = None
 DeviceConnectionTop = None
@@ -191,7 +191,7 @@ def StartApp(window: tk.Tk):
         height=2,
         command=lambda: AddValue(" - ")
     )
-    test2_button.grid(row=2, column=2, padx=5, pady=5)
+    test2_button.grid(row=2, column=0, padx=5, pady=5)
 
 def Progress(window: tk.Toplevel, progress: ttk.Progressbar, value: int):
     progress["value"] = value
