@@ -5,7 +5,6 @@ import numpy as np
 import asyncio
 import struct
 import calculator
-import tkinter.font as tkFont
 from bleak import BleakScanner, BleakClient
 
 DEVICE_NAME = "XIAO-ESP32S3"
@@ -149,7 +148,7 @@ def Calculate(window: tk.Tk, label: tk.Label):
 def StartApp(window: tk.Tk):
     global new_input_label, equation_label
     window.title("Calculator")
-    window.geometry("500x300")
+    window.geometry("")
 
     texts = CreateEquation()
 
@@ -159,7 +158,7 @@ def StartApp(window: tk.Tk):
     answer_label = tk.Label(window, text="=", font=Font, justify="right")
     answer_label.grid(row=0, column=2, padx=5, pady=5)
 
-    new_input_label = tk.Label(window, text="", font=tkFont(weight="bold", size=14))
+    new_input_label = tk.Label(window, text="", font=Font)
     new_input_label.grid(row=0, column=0, padx=20, pady=20)
 
     calculate_button = tk.Button(
@@ -170,7 +169,7 @@ def StartApp(window: tk.Tk):
         height=2,
         command=lambda: Calculate(window, answer_label)
     )
-    calculate_button.grid(row=2, column=0, padx=5, pady=5)
+    calculate_button.grid(row=2, column=1, padx=5, pady=5)
     
     # Should be removed later
     
@@ -182,7 +181,7 @@ def StartApp(window: tk.Tk):
         height=2,
         command=lambda: AddValue(" + ")
     )
-    test_button.grid(row=2, column=1, padx=5, pady=5)
+    test_button.grid(row=2, column=2, padx=5, pady=5)
     
     test2_button = tk.Button(
         window,
@@ -249,7 +248,6 @@ def Connecting():
 def MainMenuWindow():
     global Menu
     Menu = tk.Tk()
-    Menu.resizable(False, False)
     Menu.grid_rowconfigure(0, weight=1)
     Menu.grid_columnconfigure(0, weight=1)
     Menu.title("Smart Wearables App")
