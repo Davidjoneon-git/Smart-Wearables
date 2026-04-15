@@ -28,7 +28,7 @@ model = tf.keras.models.load_model("ml_model.keras")
 N=8
 
 # confidence threshold for "null"
-nullThreshold = 0.6
+nullThreshold = 0.7
 
 # number of collected samples for baseline
 baselineReadingsNum = 80
