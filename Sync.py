@@ -28,7 +28,7 @@ model = tf.keras.models.load_model("ml_model.keras")
 N=8
 
 # confidence threshold for "null"
-nullThreshold = 0.7
+nullThreshold = 0.6
 
 # number of collected samples for baseline
 baselineReadingsNum = 80
@@ -47,7 +47,7 @@ BaselineBackspace = 0.0
 # Retained matrix for inference stage
 retained = np.zeros((1, N, N), dtype=int)
 
-max_times = 60
+max_times = 30
 
 times = 0
         
