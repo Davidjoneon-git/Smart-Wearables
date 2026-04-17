@@ -1,6 +1,7 @@
 import asyncio
 import struct
 import numpy as np
+import tkinter as tk
 from bleak import BleakScanner, BleakClient
 
 DEVICE_NAME = "XIAO-ESP32S3"
@@ -33,7 +34,6 @@ def handle_notification(sender, data):
         print("-" * 40)
         return
 
-    # Optional: reshape into 8x8
     grid = [matrix[i*8:(i+1)*8] for i in range(8)]
     for row in MatrixToBoolean(grid):
         print(row)

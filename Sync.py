@@ -27,11 +27,11 @@ model = tf.keras.models.load_model("ml_model.keras")
 
 N=8
 
-# confidence threshold for "null"
+# confidence threshold for "null" = 0.7
 nullThreshold = 0.7
 
-# number of collected samples for baseline
-baselineReadingsNum = 80
+# number of collected samples for baseline = 80
+baselineReadingsNum = 60
 
 # Is collecting data for baseline
 IsBaseline = True
@@ -74,7 +74,6 @@ def MatrixToBoolean(readings):
 
 def update_matrix(readings):
     global retained
-
     # Collect maximum values over the current decision window
     for r in range(N):
         for c in range(N):
@@ -152,15 +151,16 @@ def StartApp(window: tk.Tk):
 
     texts = CreateEquation()
 
+    new_input_label = tk.Label(window, text="", font=Font, bg="lightblue", width=6, height=6)
+    new_input_label.grid(row=0, column=0, padx=20, pady=20)
+
     equation_label = tk.Label(window, text=texts, font=Font, justify="center")
     equation_label.grid(row=0, column=1, padx=5, pady=5)
     
     answer_label = tk.Label(window, text="=", font=Font, justify="right")
     answer_label.grid(row=0, column=2, padx=5, pady=5)
 
-    new_input_label = tk.Label(window, text="", font=Font)
-    new_input_label.grid(row=0, column=0, padx=20, pady=20)
-
+    
     calculate_button = tk.Button(
         window,
         text="Calculate",
@@ -276,7 +276,8 @@ def handle_notification(sender, data):
         CreateBaselineData(backspace, matrix)
         return
     
-    if backspace > Threshold(BaselineBackspace):
+    if backspace > Threshold(BaselineBackspace) and times//4 == 0:
+        DeleteValue()
         print("Pressed")
 
     grid = np.array(matrix, dtype=np.int32).reshape(N, N)
