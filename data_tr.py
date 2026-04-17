@@ -89,7 +89,7 @@ max_times = 60
 times = 0
 
 # number of collected sample for baseline
-baselineReadingsNum = 80
+baselineReadingsNum = 60
 
 # Is collecting data for baseline
 IsBaseline = True
