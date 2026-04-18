@@ -81,7 +81,7 @@ async def main():
             await asyncio.sleep(1)
 
 
-CurrentReadingFeature = "0"
+CurrentReadingFeature = "2"
 collectionN = 0
 
 def handle_notification(sender, data):
@@ -112,8 +112,8 @@ def handle_notification(sender, data):
             Done = True
             
 
-CollectedReadingAmount = 60
-SamplesPerReading = 60
+CollectedReadingAmount = 30
+SamplesPerReading = 20
 collection = []
 readings = []
 Collecting = False
@@ -129,7 +129,7 @@ def CollectingReading(matrix):
     read += 1
     
     if read >= SamplesPerReading:
-        print(f"Reading added to collection: {read}")
+        print(f"Reading added to collection: {collectionN}")
         collection.append(readings)
         readings = []
         read = 0
