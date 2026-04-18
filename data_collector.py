@@ -96,6 +96,7 @@ def handle_notification(sender, data):
     matrix = np.array(values[1:], dtype=np.float32).reshape(8,8)
     
     if backspace > 500:
+        print("Collection Started")
         Collecting = True
     
     if IsBaseline:
