@@ -2,6 +2,7 @@ import asyncio
 import struct
 import numpy as np
 from bleak import BleakScanner, BleakClient
+import tensorflow as tf
 
 DEVICE_NAME = "XIAO-ESP32S3"
 CHAR_UUID = "abcdefab-1234-1234-1234-abcdefabcdef"
@@ -9,6 +10,8 @@ CHAR_UUID = "abcdefab-1234-1234-1234-abcdefabcdef"
 NUM_VALUES = 65  # 1 backspace + 64 matrix values
 PACKET_FORMAT = "<65H"  # little-endian, 65 unsigned shorts
 PACKET_SIZE = struct.calcsize(PACKET_FORMAT)
+
+MODEL_PATH = "multi-class_classifier_model.keras"
 
 Done = False
 
@@ -72,6 +75,9 @@ async def main():
     if target is None:
         print("Device not found")
         return
+    
+    if isTesting:
+        SetupModel()
 
     async with BleakClient(target.address) as client:
         print("Connected to", target.name)
@@ -118,6 +124,34 @@ collection = []
 readings = []
 Collecting = False
 
+def Saving():
+    global read, Collecting, readings, collection
+    print(f"Reading added to collection: {collectionN}")
+    collection.append(readings)
+    readings = []
+    read = 0
+    Collecting = False
+
+def SetupModel():
+    global model
+    model = tf.keras.models.load_model(MODEL_PATH)
+
+def Test(sample):
+    global read, Collecting, readings, collection, model
+    arr = np.array(sample, dtype=np.float32).reshape(SamplesPerReading, 8, 8)
+    pred = model.predict(arr)[0]
+    confidence = np.max(pred)
+    label = np.argmax(pred)
+    
+    print("Prediction:", label)
+    print("Confidence:", confidence)
+    
+    readings = []
+    read = 0
+    Collecting = False
+
+isTesting = True # For testing the model
+
 read = 0
 def CollectingReading(matrix):
     global readings, read, collection, Collecting
@@ -129,11 +163,11 @@ def CollectingReading(matrix):
     read += 1
     
     if read >= SamplesPerReading:
-        print(f"Reading added to collection: {collectionN}")
-        collection.append(readings)
-        readings = []
-        read = 0
-        Collecting = False
+        if not isTesting:
+            Saving()
+        else:
+            Test(readings)
+        
         return True
     return False
 
